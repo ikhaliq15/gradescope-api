@@ -23,6 +23,12 @@ class GradescopeAssignment:
         self._course = _course
         self.assignment_id = assignment_id
 
+    def __str__(self) -> str:
+        return f"<{self.get_url()}>"
+
+    def __repr__(self) -> str:
+        return f"GradescopeAssignment(assignment_id={self.assignment_id})"
+
     def get_url(self) -> str:
         return self._course.get_url() + f"/assignments/{self.assignment_id}"
 

@@ -18,6 +18,7 @@ class GradescopeCourse:
         self._client = _client
         self.course_id = course_id
         self.roster: List[GradescopeStudent] = []
+        self.assignments: List[GradescopeAssignment] = []
 
     def get_url(self) -> str:
         return self._client.get_base_url() + f"/courses/{self.course_id}"
@@ -63,6 +64,31 @@ class GradescopeCourse:
             if email != None and student.email == email:
                 return student
         return None
+
+    def get_assignments(self) -> List[GradescopeAssignment]:
+        if self.assignments:
+            return self.assignments
+
+        url = self._client.get_base_url() + f"/courses/{self.course_id}/assignments"
+        response = self._client.session.get(url=url, timeout=20)
+        check_response(response, "failed to get assignments")
+
+        soup = BeautifulSoup(response.content, "html.parser")
+        for row in soup.find_all("tr", class_="js-assignmentTableAssignmentRow"):
+            primaryAssignmentColumn = row.find("td", class_="table--primaryLink")
+            if primaryAssignmentColumn:
+                assignmentLink = primaryAssignmentColumn.find("a")
+                if assignmentLink:
+                    assignment_url = assignmentLink["href"]
+                    self.assignments.append(
+                        GradescopeAssignment(
+                            _client=self._client,
+                            _course=self,
+                            assignment_id=get_url_id(url=assignment_url, kind="assignments")
+                        )
+                    )
+
+        return self.assignments
 
     def get_assignment(
         self, assignment_id: Optional[str] = None, assignment_url: Optional[str] = None
